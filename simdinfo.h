@@ -24,7 +24,9 @@
 // simdinfo.h
 //
 // simdinfo is a header-only library for detecting SIMD instruction set support
-// at runtime and compile time.
+// at runtime and compile time. It can be used to build programs for specific
+// architectures like x86_64 that can take advantage of multiple instruction
+// sets depending on the machine it is running on.
 //
 // The library exposes a struct `simdinfo_t` that contains flags for various
 // SIMD instruction sets.
