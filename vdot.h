@@ -15,7 +15,7 @@
 //   return sum;
 // }
 
-static inline float _vdot_f32_scalar(float *a, float *b, size_t size) {
+static inline float _vdot_f32_serial(float *a, float *b, size_t size) {
   // Use Kahan summation algorithm to reduce floating point errors
   // https://en.wikipedia.org/wiki/Kahan_summation_algorithm
   float sum = 0.0;
@@ -242,8 +242,8 @@ float vdot_f32(float *a, float *b, size_t size) {
 #endif // __ARM_NEON
 
   // Default
-  // Fall back to scalar
-  return _vdot_f32_scalar(a, b, size);
+  // Fall back to serial implementation
+  return _vdot_f32_serial(a, b, size);
 }
 
 #endif // VDOT_H
