@@ -149,6 +149,27 @@ gcc \
 ./sum
 ```
 
+If you only want to enable dynamic dispatch on some builds you can implement a pattern like the following
+
+```c
+float sum(float *data, size_t n) {
+#if defined(DYNAMIC_DISPATCH)
+    simdinfo_t info = simdinfo();
+#else
+#undef SIMDINFO_SUPPORTS
+#define SIMDINFO_SUPPORTS(info, feature) 1
+#endif
+#if defined(__AVX__)
+    if (SIMDINFO_SUPPORTS(info, __AVX__)) {
+        return sum_avx(data, n);
+    }
+#endif
+    return sum_serial(data, n);
+}
+```
+
+In the above code, if `DYNAMIC_DISPATCH` is defined, the code will use `simdinfo` to check if the machine supports AVX instructions. If `DYNAMIC_DISPATCH` is not defined, the code will always use the AVX code path if the compiler supports AVX instructions.
+
 # Related Projects
 
 - https://github.com/ashvardanian/SimSIMD
