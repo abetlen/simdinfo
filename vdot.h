@@ -219,24 +219,24 @@ float vdot_f32(float *a, float *b, size_t size) {
 
 // x86
 #if defined(__AVX512F__)
-  if (VDOT_STATIC_DISPATCH || info.supports_avx512f) {
+  if (SIMDINFO_SUPPORTS(info, __AVX512F__)) {
     return vdot_avx512f(a, b, size);
   }
 #endif // __AVX512F__
 #if defined(__AVX__) || defined(__AVX2__)
-  if (VDOT_STATIC_DISPATCH || info.supports_avx || info.supports_avx2) {
+  if (SIMDINFO_SUPPORTS(info, __AVX__) || SIMDINFO_SUPPORTS(info, __AVX2__)) {
     return _vdot_f32_avx(a, b, size);
   }
 #endif // __AVX__ || __AVX2__
 
 // ARM
 #if defined(__ARM_FEATURE_SVE)
-  if (VDOT_STATIC_DISPATCH || info.supports_sve) {
+  if (SIMDINFO_SUPPORTS(info, __ARM_FEATURE_SVE)) {
     return vdot_sve(a, b, size);
   }
 #endif // __ARM_FEATURE_SVE
 #if defined(__ARM_NEON)
-  if (VDOT_STATIC_DISPATCH || info.supports_neon) {
+  if (SIMDINFO_SUPPORTS(info, __ARM_NEON)) {
     return _vdot_f32_neon(a, b, size);
   }
 #endif // __ARM_NEON

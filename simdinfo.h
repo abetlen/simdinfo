@@ -41,81 +41,127 @@
 #ifndef _SIMDINFO_H_
 #define _SIMDINFO_H_
 
-#if defined(__aarch64__)
+#if defined(__aarch64__) || defined(__arm__)
 #include <asm/hwcap.h>
 #include <sys/auxv.h>
 #endif // __aarch64__
 
+#if defined(__APPLE__)
+#include <sys/sysctl.h>
+#endif // __APPLE__
+
 struct simdinfo_t {
-  // Check for AVX
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L106
+  // x86 and x86_64
   unsigned supports_avx;
-  // Check for AVX2 (Function ID 7, EBX register)
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L148
   unsigned supports_avx2;
-  // Check for F16C (Function ID 1, ECX register)
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L107
+  unsigned supports_avxvnni;
   unsigned supports_f16c;
   unsigned supports_fma;
-  // Check for AVX512F (Function ID 7, EBX register)
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L155
   unsigned supports_avx512f;
-  // Check for AVX512FP16 (Function ID 7, EDX register)
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L198C9-L198C23
   unsigned supports_avx512fp16;
-  // Check for AVX512VNNI (Function ID 7, ECX register)
+  unsigned supports_avx512bf16;
   unsigned supports_avx512vnni;
-  // Check for AVX512IFMA (Function ID 7, EBX register)
-  unsigned supports_avx512ifma;
-  // Check for AVX512BITALG (Function ID 7, ECX register)
-  unsigned supports_avx512bitalg;
-  // Check for AVX512VBMI2 (Function ID 7, ECX register)
-  unsigned supports_avx512vbmi2;
-  // Check for AVX512VPOPCNTDQ (Function ID 7, ECX register)
-  unsigned supports_avx512vpopcntdq;
+  unsigned supports_avx512vbmi;
+  unsigned supports_avx512dq;
+  unsigned supports_sse3;
+  unsigned supports_ssse3;
 
+  // arm and aarch64
   unsigned supports_neon;
-  // https://github.com/torvalds/linux/blob/83a7eefedc9b56fe7bfeff13b6c7356688ffa670/arch/arm64/include/uapi/asm/hwcap.h#L48
+  unsigned supports_neon_fma;
   unsigned supports_sve;
-  // https://github.com/torvalds/linux/blob/83a7eefedc9b56fe7bfeff13b6c7356688ffa670/arch/arm64/include/uapi/asm/hwcap.h#L63
   unsigned supports_sve2;
+  unsigned supports_arm_feature_matmul_int8;
+  unsigned supports_arm_feature_fp16_vector_arithmetic;
 };
+
+#define _SIMDINFO_SUPPORTS__AVX__(info) ((info).supports_avx)
+#define _SIMDINFO_SUPPORTS__AVX2__(info) ((info).supports_avx2)
+
+#define _SIMDINFO_SUPPORTS__F16C__(info) ((info).supports_f16c)
+#define _SIMDINFO_SUPPORTS__FMA__(info) ((info).supports_fma)
+
+#define _SIMDINFO_SUPPORTS__AVXVNNI__(info) ((info).supports_avxvnni)
+
+#define _SIMDINFO_SUPPORTS__AVX512F__(info) ((info).supports_avx512f)
+#define _SIMDINFO_SUPPORTS__AVX512BF16__(info) ((info).supports_avx512bf16)
+#define _SIMDINFO_SUPPORTS__AVX512VNNI__(info) ((info).supports_avx512vnni)
+#define _SIMDINFO_SUPPORTS__AVX512VBMI__(info) ((info).supports_avx512vbmi)
+#define _SIMDINFO_SUPPORTS__AVX512DQ__(info) ((info).supports_avx512dq)
+
+#define _SIMDINFO_SUPPORTS__SSE3(info) ((info).supports_sse3)
+#define _SIMDINFO_SUPPORTS__SSSE3(info) ((info).supports_ssse3)
+
+#define _SIMDINFO_SUPPORTS__ARM_NEON(info) ((info).supports_neon)
+#define _SIMDINFO_SUPPORTS__ARM_FEATURE_FMA(info) ((info).supports_neon_fma)
+#define _SIMDINFO_SUPPORTS__ARM_FEATURE_SVE(info) ((info).supports_sve)
+#define _SIMDINFO_SUPPORTS__ARM_FEATURE_SVE2(info) ((info).supports_sve2)
+#define _SIMDINFO_SUPPORTS__ARM_FEATURE_MATMUL_INT8(info)                      \
+  ((info).supports_arm_feature_matmul_int8)
+#define _SIMDINFO_SUPPORTS__ARM_FEATURE_FP16_VECTOR_ARITHMETIC(info)           \
+  ((info).supports_arm_feature_fp16_vector_arithmetic)
+
+#define SIMDINFO_SUPPORTS(info, feature) _SIMDINFO_SUPPORTS##feature(info)
 
 static inline struct simdinfo_t simdinfo_static() {
   return (struct simdinfo_t) {
-#if defined(__AVX512F__)
-    .supports_avx512f = 1,
-#endif // __AVX512F__
-#if defined(__AVX512FP16__)
-    .supports_avx512fp16 = 1,
-#endif // __AVX512FP16__
-#if defined(__AVX512VNNI__)
-    .supports_avx512vnni = 1,
-#endif // __AVX512VNNI__
-#if defined(__AVX512IFMA__)
-    .supports_avx512ifma = 1,
-#endif // __AVX512IFMA__
-#if defined(__AVX512BITALG__)
-    .supports_avx512bitalg = 1,
-#endif // __AVX512BITALG__
-#if defined(__AVX512VBMI2__)
-    .supports_avx512vbmi2 = 1,
-#endif // __AVX512VBMI2__
-#if defined(__AVX512VPOPCNTDQ__)
-    .supports_avx512vpopcntdq = 1,
-#endif // __AVX512VPOPCNTDQ__
 #if defined(__AVX__)
     .supports_avx = 1,
 #endif // __AVX__
 #if defined(__AVX2__)
     .supports_avx2 = 1,
 #endif // __AVX2__
-#if defined(__ARM_FEATURE_SVE)
-    .supports_sve = 1,
-#endif // __ARM_FEATURE_SVE
+#if defined(__F16C__)
+    .supports_f16c = 1,
+#endif // __F16C__
+#if defined(__FMA__)
+    .supports_fma = 1,
+#endif // __FMA__
+#if defined(__AVX512F__)
+    .supports_avx512f = 1,
+#endif // __AVX512F__
+#if defined(__AVX512FP16__)
+    .supports_avx512fp16 = 1,
+#endif // __AVX512FP16__
+#if defined(__AVX512BF16__)
+    .supports_avx512bf16 = 1,
+#endif // __AVX512BF16__
+#if defined(__AVXVNNI__)
+    .supports_avxvnni = 1,
+#endif // __AVXVNNI__
+#if defined(__AVX512VNNI__)
+    .supports_avx512vnni = 1,
+#endif // __AVX512VNNI__
+#if defined(__AVX512VBMI__)
+    .supports_avx512vbmi = 1,
+#endif // __AVX512VBMI2__
+#if defined(__AVX512DQ__)
+    .supports_avx512dq = 1,
+#endif // __AVX512DQ__
+#if defined(__SSE3__)
+    .supports_sse3 = 1,
+#endif // __SSE3__
+#if defined(__SSSE3__)
+    .supports_ssse3 = 1,
+#endif // __SSSE3__
 #if defined(__ARM_NEON)
     .supports_neon = 1,
 #endif // __ARM_NEON
+#if defined(__ARM_FEATURE_FMA)
+    .supports_neon_fma = 1,
+#endif // __ARM_FEATURE_FMA
+#if defined(__ARM_FEATURE_SVE)
+    .supports_sve = 1,
+#endif // __ARM_FEATURE_SVE
+#if defined(__ARM_FEATURE_SVE2)
+    .supports_sve2 = 1,
+#endif // __ARM_FEATURE_SVE2
+#if defined(__ARM_FEATURE_MATMUL_INT8)
+    .supports_arm_feature_matmul_int8 = 1,
+#endif // __ARM_FEATURE_MATMUL_INT8
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+    .supports_arm_feature_fp16_vector_arithmetic = 1,
+#endif // __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
   };
 }
 
@@ -145,57 +191,81 @@ static inline struct simdinfo_t simdinfo_runtime_internal() {
                          "=c"(info7.named.ecx), "=d"(info7.named.edx)
                        : "a"(7), "c"(0));
 #endif
-  // Check for AVX
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L106
+  // source:
+  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h
+
   info.supports_avx = (info7.named.ecx & 0x10000000) != 0;
-  // Check for AVX2 (Function ID 7, EBX register)
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L148
   info.supports_avx2 = (info7.named.ebx & 0x00000020) != 0;
-  // Check for F16C (Function ID 1, ECX register)
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L107
   info.supports_f16c = (info1.named.ecx & 0x20000000) != 0;
   info.supports_fma = (info1.named.ecx & 0x00001000) != 0;
-  // Check for AVX512F (Function ID 7, EBX register)
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L155
+  info.supports_avxvnni = (info7.named.eax & 0x00000010) != 0;
   info.supports_avx512f = (info7.named.ebx & 0x00010000) != 0;
-  // Check for AVX512FP16 (Function ID 7, EDX register)
-  // https://github.com/llvm/llvm-project/blob/50598f0ff44f3a4e75706f8c53f3380fe7faa896/clang/lib/Headers/cpuid.h#L198C9-L198C23
   info.supports_avx512fp16 = (info7.named.edx & 0x00800000) != 0;
-  // Check for AVX512VNNI (Function ID 7, ECX register)
+  info.supports_avx512bf16 = (info7.named.edx & 0x00000020) != 0;
   info.supports_avx512vnni = (info7.named.ecx & 0x00000800) != 0;
-  // Check for AVX512IFMA (Function ID 7, EBX register)
-  info.supports_avx512ifma = (info7.named.ebx & 0x00200000) != 0;
-  // Check for AVX512BITALG (Function ID 7, ECX register)
-  info.supports_avx512bitalg = (info7.named.ecx & 0x00001000) != 0;
-  // Check for AVX512VBMI2 (Function ID 7, ECX register)
-  info.supports_avx512vbmi2 = (info7.named.ecx & 0x00000040) != 0;
-  // Check for AVX512VPOPCNTDQ (Function ID 7, ECX register)
-  info.supports_avx512vpopcntdq = (info7.named.ecx & 0x00004000) != 0;
+  info.supports_avx512vbmi = (info7.named.ecx & 0x00000002) != 0;
+  info.supports_avx512dq = (info7.named.ebx & 0x00020000) != 0;
+
   return info;
 
 #endif // __x86_64__ || _M_X64 || __i386 || _M_IX86
 
 #if defined(__aarch64__)
-
   // Every 64-bit Arm CPU supports NEON
   info.supports_neon = 1;
-  // https://github.com/torvalds/linux/blob/83a7eefedc9b56fe7bfeff13b6c7356688ffa670/arch/arm64/include/uapi/asm/hwcap.h#L48
+  // Every arm version > 7 (all aarch64) supports NEON FMA
+  info.supports_neon_fma = 1;
   info.supports_sve = 0;
-  // https://github.com/torvalds/linux/blob/83a7eefedc9b56fe7bfeff13b6c7356688ffa670/arch/arm64/include/uapi/asm/hwcap.h#L63
   info.supports_sve2 = 0;
-
 #ifdef __linux__
   unsigned long hwcap = getauxval(AT_HWCAP);
   unsigned long hwcap2 = getauxval(AT_HWCAP2);
+  // https://github.com/torvalds/linux/blob/83a7eefedc9b56fe7bfeff13b6c7356688ffa670/arch/arm64/include/uapi/asm/hwcap.h
   info.supports_sve = (hwcap & HWCAP_SVE) != 0;
   info.supports_sve2 = (hwcap2 & HWCAP2_SVE2) != 0;
+// This is not always defined for some reason
+#ifndef HWCAP2_I8MM
+#define HWCAP2_I8MM (1 << 13)
+#endif
+  info.supports_arm_feature_matmul_int8 = (hwcap2 & HWCAP2_I8MM) != 0;
+  info.supports_arm_feature_fp16_vector_arithmetic =
+      (hwcap & HWCAP_ASIMDHP) != 0;
 #endif // __linux__
+#ifdef __APPLE__
+  // use sysctlbyname to get hw.optional.* values
+  // https://developer.apple.com/documentation/kernel/1387446-sysctlbyname/determining_instruction_set_characteristics
+  size_t size = sizeof(int);
+  int hw_optional_arm_feat_i8mm = 0;
+  sysctlbyname("hw.optional.arm.FEAT_I8MM", &hw_optional_arm_feat_i8mm, &size,
+               NULL, 0);
+  info.supports_arm_feature_matmul_int8 = hw_optional_arm_feat_i8mm;
+  int hw_optional_arm_feat_fp16 = 0;
+  sysctlbyname("hw.optional.arm.FEAT_FP16", &hw_optional_arm_feat_fp16, &size,
+               NULL, 0);
+  info.supports_arm_feature_fp16_vector_arithmetic = hw_optional_arm_feat_fp16;
+#endif // __APPLE__
   return info;
 #endif // __aarch64__
+
+#ifdef __arm__
+#ifdef __linux__
+  // https://github.com/torvalds/linux/blob/83a7eefedc9b56fe7bfeff13b6c7356688ffa670/arch/arm/include/uapi/asm/hwcap.h
+  unsigned long hwcap = getauxval(AT_HWCAP);
+  unsigned long hwcap2 = getauxval(AT_HWCAP2);
+  info.supports_neon = (hwcap & HWCAP_NEON) != 0;
+  info.supports_neon_fma = (hwcap & HWCAP_VFPv4) != 0;
+  info.supports_arm_feature_matmul_int8 = (hwcap2 & HWCAP_I8MM) != 0;
+  info.supports_arm_feature_fp16_vector_arithmetic =
+      (hwcap & HWCAP_ASIMDHP) != 0;
+  return info;
+#endif // __linux__
+#endif // __arm__
+
   return info;
 }
 
 static inline struct simdinfo_t simdinfo_runtime() {
+  // https://stackoverflow.com/questions/18298280/how-to-declare-a-variable-as-thread-local-portably
 #if __GNUC__
   static __thread unsigned initialized = 0;
   static __thread struct simdinfo_t info = {0};
@@ -208,6 +278,7 @@ static inline struct simdinfo_t simdinfo_runtime() {
 #elif MSC_VER
   static __declspec(thread) unsigned initialized = 0;
   static __declspec(thread) struct simdinfo_t info = {0};
+  // https://stackoverflow.com/questions/1440570/likely-unlikely-equivalent-for-msvc
   if (initialized) {
     return info;
   }
