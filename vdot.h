@@ -2,8 +2,8 @@
 #ifndef VDOT_H
 #define VDOT_H
 
-#include <stdlib.h>
 #include "simdinfo.h"
+#include <stdlib.h>
 
 /* Fallback scalar implementation */
 
@@ -119,38 +119,39 @@ static inline float vdot_avx512f(float *a, float *b, size_t size) {
 #include <arm_sve.h>
 
 static inline float vdot_sve(float *a, float *b, size_t size) {
-    // Initialize the dot product result
-    float result = 0.0f;
-    // Create a zeroed float vector
-    svfloat32_t sum_vec = svdup_f32(0.0f);
+  // Initialize the dot product result
+  float result = 0.0f;
+  // Create a zeroed float vector
+  svfloat32_t sum_vec = svdup_f32(0.0f);
 
-    // Process the vectors in chunks using SVE
-    size_t i = 0;
-    size_t vec_size = svcntw(); // Vector size in terms of number of float32 elements
-    while (i + vec_size <= size) {
-        // Load chunks of the vectors
-        svbool_t pg = svwhilelt_b32(i, size);
-        svfloat32_t a_vec = svld1_f32(pg, &a[i]);
-        svfloat32_t b_vec = svld1_f32(pg, &b[i]);
-        
-        // Perform element-wise multiplication and accumulate
-        sum_vec = svmla_f32_m(pg, sum_vec, a_vec, b_vec);
-        
-        i += vec_size;
-    }
+  // Process the vectors in chunks using SVE
+  size_t i = 0;
+  size_t vec_size =
+      svcntw(); // Vector size in terms of number of float32 elements
+  while (i + vec_size <= size) {
+    // Load chunks of the vectors
+    svbool_t pg = svwhilelt_b32(i, size);
+    svfloat32_t a_vec = svld1_f32(pg, &a[i]);
+    svfloat32_t b_vec = svld1_f32(pg, &b[i]);
 
-    // Handle any remaining elements
-    if (i < size) {
-        svbool_t pg = svwhilelt_b32(i, size);
-        svfloat32_t a_vec = svld1_f32(pg, &a[i]);
-        svfloat32_t b_vec = svld1_f32(pg, &b[i]);
-        sum_vec = svmla_f32_m(pg, sum_vec, a_vec, b_vec);
-    }
+    // Perform element-wise multiplication and accumulate
+    sum_vec = svmla_f32_m(pg, sum_vec, a_vec, b_vec);
 
-    // Sum up the elements in the result vector
-    result = svaddv_f32(svptrue_b32(), sum_vec);
+    i += vec_size;
+  }
 
-    return result;
+  // Handle any remaining elements
+  if (i < size) {
+    svbool_t pg = svwhilelt_b32(i, size);
+    svfloat32_t a_vec = svld1_f32(pg, &a[i]);
+    svfloat32_t b_vec = svld1_f32(pg, &b[i]);
+    sum_vec = svmla_f32_m(pg, sum_vec, a_vec, b_vec);
+  }
+
+  // Sum up the elements in the result vector
+  result = svaddv_f32(svptrue_b32(), sum_vec);
+
+  return result;
 }
 
 #endif // __ARM_FEATURE_SVE
@@ -206,37 +207,33 @@ static inline float _vdot_f32_neon(float *a, float *b, size_t size) {
 
 #endif // __ARM_NEON
 
-#ifndef VDOT_STATIC_DISPATCH
-#define VDOT_STATIC_DISPATCH 1
-#endif // VDOT_STATIC_DISPATCH
+#ifndef VDOT_STATIC
+#define VDOT_STATIC 0
+#endif
 
 float vdot_f32(float *a, float *b, size_t size) {
-#if VDOT_STATIC_DISPATCH
-  struct simdinfo_t info = simdinfo_static();
-#else
-  struct simdinfo_t info = simdinfo_runtime();
-#endif
+  simdinfo_t info = simdinfo();
 
 // x86
 #if defined(__AVX512F__)
-  if (SIMDINFO_SUPPORTS(info, __AVX512F__)) {
+  if (VDOT_STATIC || SIMDINFO_SUPPORTS(info, __AVX512F__)) {
     return vdot_avx512f(a, b, size);
   }
 #endif // __AVX512F__
 #if defined(__AVX__) || defined(__AVX2__)
-  if (SIMDINFO_SUPPORTS(info, __AVX__) || SIMDINFO_SUPPORTS(info, __AVX2__)) {
+  if (VDOT_STATIC || SIMDINFO_SUPPORTS(info, __AVX__) || SIMDINFO_SUPPORTS(info, __AVX2__)) {
     return _vdot_f32_avx(a, b, size);
   }
 #endif // __AVX__ || __AVX2__
 
 // ARM
 #if defined(__ARM_FEATURE_SVE)
-  if (SIMDINFO_SUPPORTS(info, __ARM_FEATURE_SVE)) {
+  if (VDOT_STATIC || SIMDINFO_SUPPORTS(info, __ARM_FEATURE_SVE)) {
     return vdot_sve(a, b, size);
   }
 #endif // __ARM_FEATURE_SVE
 #if defined(__ARM_NEON)
-  if (SIMDINFO_SUPPORTS(info, __ARM_NEON)) {
+  if (VDOT_STATIC || SIMDINFO_SUPPORTS(info, __ARM_NEON)) {
     return _vdot_f32_neon(a, b, size);
   }
 #endif // __ARM_NEON

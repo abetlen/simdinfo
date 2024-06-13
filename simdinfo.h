@@ -50,7 +50,7 @@
 #include <sys/sysctl.h>
 #endif // __APPLE__
 
-struct simdinfo_t {
+typedef struct simdinfo_t {
   // x86 and x86_64
   unsigned supports_avx;
   unsigned supports_avx2;
@@ -73,7 +73,7 @@ struct simdinfo_t {
   unsigned supports_sve2;
   unsigned supports_arm_feature_matmul_int8;
   unsigned supports_arm_feature_fp16_vector_arithmetic;
-};
+} simdinfo_t;
 
 #define _SIMDINFO_SUPPORTS__AVX__(info) ((info).supports_avx)
 #define _SIMDINFO_SUPPORTS__AVX2__(info) ((info).supports_avx2)
@@ -103,69 +103,7 @@ struct simdinfo_t {
 
 #define SIMDINFO_SUPPORTS(info, feature) _SIMDINFO_SUPPORTS##feature(info)
 
-static inline struct simdinfo_t simdinfo_static() {
-  return (struct simdinfo_t) {
-#if defined(__AVX__)
-    .supports_avx = 1,
-#endif // __AVX__
-#if defined(__AVX2__)
-    .supports_avx2 = 1,
-#endif // __AVX2__
-#if defined(__F16C__)
-    .supports_f16c = 1,
-#endif // __F16C__
-#if defined(__FMA__)
-    .supports_fma = 1,
-#endif // __FMA__
-#if defined(__AVX512F__)
-    .supports_avx512f = 1,
-#endif // __AVX512F__
-#if defined(__AVX512FP16__)
-    .supports_avx512fp16 = 1,
-#endif // __AVX512FP16__
-#if defined(__AVX512BF16__)
-    .supports_avx512bf16 = 1,
-#endif // __AVX512BF16__
-#if defined(__AVXVNNI__)
-    .supports_avxvnni = 1,
-#endif // __AVXVNNI__
-#if defined(__AVX512VNNI__)
-    .supports_avx512vnni = 1,
-#endif // __AVX512VNNI__
-#if defined(__AVX512VBMI__)
-    .supports_avx512vbmi = 1,
-#endif // __AVX512VBMI2__
-#if defined(__AVX512DQ__)
-    .supports_avx512dq = 1,
-#endif // __AVX512DQ__
-#if defined(__SSE3__)
-    .supports_sse3 = 1,
-#endif // __SSE3__
-#if defined(__SSSE3__)
-    .supports_ssse3 = 1,
-#endif // __SSSE3__
-#if defined(__ARM_NEON)
-    .supports_neon = 1,
-#endif // __ARM_NEON
-#if defined(__ARM_FEATURE_FMA)
-    .supports_neon_fma = 1,
-#endif // __ARM_FEATURE_FMA
-#if defined(__ARM_FEATURE_SVE)
-    .supports_sve = 1,
-#endif // __ARM_FEATURE_SVE
-#if defined(__ARM_FEATURE_SVE2)
-    .supports_sve2 = 1,
-#endif // __ARM_FEATURE_SVE2
-#if defined(__ARM_FEATURE_MATMUL_INT8)
-    .supports_arm_feature_matmul_int8 = 1,
-#endif // __ARM_FEATURE_MATMUL_INT8
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-    .supports_arm_feature_fp16_vector_arithmetic = 1,
-#endif // __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
-  };
-}
-
-static inline struct simdinfo_t simdinfo_runtime_internal() {
+static inline struct simdinfo_t simdinfo_internal() {
   struct simdinfo_t info = {0};
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386) ||               \
     defined(_M_IX86)
@@ -264,7 +202,7 @@ static inline struct simdinfo_t simdinfo_runtime_internal() {
   return info;
 }
 
-static inline struct simdinfo_t simdinfo_runtime() {
+static inline struct simdinfo_t simdinfo() {
   // https://stackoverflow.com/questions/18298280/how-to-declare-a-variable-as-thread-local-portably
 #if __GNUC__
   static __thread unsigned initialized = 0;
@@ -272,7 +210,7 @@ static inline struct simdinfo_t simdinfo_runtime() {
   if (__builtin_expect(initialized, 1)) {
     return info;
   }
-  info = simdinfo_runtime_internal();
+  info = simdinfo_internal();
   initialized = 1;
   return info;
 #elif MSC_VER
@@ -282,11 +220,11 @@ static inline struct simdinfo_t simdinfo_runtime() {
   if (initialized) {
     return info;
   }
-  info = simdinfo_get_info_runtime_internal();
+  info = simdinfo_internal();
   initialized = 1;
   return info;
 #else
-  return simdinfo_get_info_runtime_internal();
+  return simdinfo_internal();
 #endif
 }
 

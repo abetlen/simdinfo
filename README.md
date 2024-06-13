@@ -91,7 +91,7 @@ float sum_avx(float *data, size_t n) {
 #endif
 
 float sum(float *data, size_t n) {
-    struct simdinfo_t info = simdinfo_runtime();
+    simdinfo_t info = simdinfo();
 #if defined(__AVX__)
     if (SIMDINFO_SUPPORTS(info, __AVX__)) {
         return sum_avx(data, n);
