@@ -29,30 +29,6 @@ float sum(float *a, size_t size) {
 }
 ```
 
-And if you want to still support compile time by default and only enable dynamic dispatching on some builds (e.g. binary distributions) just override the `SIMDINFO_SUPPORTS` macro
-
-```c
-#include "simdinfo.h"
-
-
-float sum(float *a, size_t size) {
-#ifndef DYNAMIC_DISPATCH
-#undef SIMDINFO_SUPPORTS
-#define SIMDINFO_SUPPORTS(info, feature) 1
-#else
-  simdinfo_t info = simdinfo();
-#endif
-
-#if defined(__AVX__)
-  if (SIMDINFO_SUPPORTS(info, __AVX__)) {
-    return sum_avx(a, size);
-  }
-#endif
-
-  return sum_scalar(a, size);
-}
-```
-
 # Basic Example (Sum of Floats)
 
 Let's start with a little example of a c function that sums up an array of floats.
