@@ -14,8 +14,7 @@ bin/main-x86_64: main.c vdot.h simdinfo.h bin
 		-mtune=generic \
 		-I. \
 		-O2 \
-		-Wall \
-		-DVDOT_STATIC_DISPATCH=0
+		-Wall
 
 test-x86_64: bin/main-x86_64
 	./bin/main-x86_64 $(TEST_SIZE)
@@ -28,7 +27,7 @@ bin/main-static-x86_64: main.c vdot.h simdinfo.h bin
 		-I. \
 		-O3 \
 		-Wall \
-		-DVDOT_STATIC_DISPATCH=1
+		-DVDOT_STATIC_DISPATCH
 
 test-static-x86_64: bin/main-static-x86_64
 	./bin/main-static-x86_64 $(TEST_SIZE)
@@ -44,8 +43,7 @@ bin/main-aarch64: main.c vdot.h simdinfo.h bin
 		-mtune=generic \
 		-I. \
 		-O2 \
-		-Wall \
-		-DVDOT_STATIC_DISPATCH=0
+		-Wall
 
 test-aarch64: bin/main-aarch64
 	qemu-aarch64 \
