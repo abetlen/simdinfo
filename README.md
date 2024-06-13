@@ -1,12 +1,33 @@
 # simdinfo
 
-simdinfo is a header-only library for detecting SIMD features of a cpu at runtime.
+simdinfo is a header-only library for detecting SIMD support at runtime.
 
-It's primary use is for dynamic dispatching of SIMD code based on the best available instruction sets for a host machine.
+Say you have a function that already checks for SIMD support at compile time
 
-You can use simdinfo to compile a generic binary application or library for x86_64 linux machines that can detect and use AVX, AVX2, AVX512, etc. depending on what's available at runtime.
+```c
+float sum(float *a, size_t size) {
+#if defined(__AVX__) || defined(__AVX2__)
+  return sum_avx(a, size);
+#else
+  return sum_scalar(a, size);
+#endif
+}
+```
 
-This makes binaries more portable and performant across different machines ideal for system packages, python wheels, etc.
+You can replace the compile-time check with a runtime check:
+
+```c
+#include "simdinfo.h"
+
+float sum(float *a, size_t size) {
+  simdinfo_t info = simdinfo();
+  if (SIMDINFO_SUPPORTS(info, __AVX__) || SIMDINFO_SUPPORTS(info, __AVX2__)) {
+    return sum_avx(a, size);
+  } else {
+    return sum_scalar(a, size);
+  }
+}
+```
 
 # Basic Example (Sum of Floats)
 
