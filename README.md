@@ -1,12 +1,12 @@
 # simdinfo
 
-simdinfo is a header-only library for detecting SIMD support at runtime.
+simdinfo is a simple, header-only library for detecting SIMD support at runtime.
 
-Say you have a function that already checks for SIMD support at compile time
+If you have a function that already checks for SIMD support at compile time via preprocessor directives
 
 ```c
 float sum(float *a, size_t size) {
-#if defined(__AVX__) || defined(__AVX2__)
+#if defined(__AVX__)
   return sum_avx(a, size);
 #else
   return sum_scalar(a, size);
@@ -14,18 +14,42 @@ float sum(float *a, size_t size) {
 }
 ```
 
-You can replace the compile-time check with a runtime check:
+You can use simdinfo to replace the compile-time check with a runtime check using the same directive names
 
 ```c
 #include "simdinfo.h"
 
 float sum(float *a, size_t size) {
   simdinfo_t info = simdinfo();
-  if (SIMDINFO_SUPPORTS(info, __AVX__) || SIMDINFO_SUPPORTS(info, __AVX2__)) {
+  if (SIMDINFO_SUPPORTS(info, __AVX__)) {
     return sum_avx(a, size);
   } else {
     return sum_scalar(a, size);
   }
+}
+```
+
+And if you want to still support compile time by default and only enable dynamic dispatching on some builds (e.g. binary distributions) just override the `SIMDINFO_SUPPORTS` macro
+
+```c
+#include "simdinfo.h"
+
+
+float sum(float *a, size_t size) {
+#ifndef DYNAMIC_DISPATCH
+#undef SIMDINFO_SUPPORTS
+#define SIMDINFO_SUPPORTS(info, feature) 1
+#else
+  simdinfo_t info = simdinfo();
+#endif
+
+#if defined(__AVX__)
+  if (SIMDINFO_SUPPORTS(info, __AVX__)) {
+    return sum_avx(a, size);
+  }
+#endif
+
+  return sum_scalar(a, size);
 }
 ```
 
